@@ -5,11 +5,15 @@ import DashboardPage from './pages/DashboardPage';
 import ApiEditorPage from './pages/ApiEditorPage';
 import MockServerPage from './pages/MockServerPage';
 import HistoryPage from './pages/HistoryPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 import { useStore } from './store/useStore';
 
 type View = 'dashboard' | 'editor' | 'mock' | 'history';
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<'login' | 'signup'>('login');
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [showCreateModal, setShowCreateModal] = useState(false);
   
@@ -31,6 +35,13 @@ export default function App() {
     setSelectedProjectId(projectId);
     setCurrentView('editor');
   };
+
+  if (!isAuthenticated) {
+    if (authView === 'login') {
+      return <LoginPage onLogin={() => setIsAuthenticated(true)} onNavigateSignup={() => setAuthView('signup')} />;
+    }
+    return <SignupPage onSignup={() => setIsAuthenticated(true)} onNavigateLogin={() => setAuthView('login')} />;
+  }
 
   return (
     <>
