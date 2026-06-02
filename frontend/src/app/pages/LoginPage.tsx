@@ -18,28 +18,16 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('로그인 실패');
+    // 프런트엔드 테스트용 어드민 계정 확인
+    setTimeout(() => {
+      if (email === 'admin' && password === 'admin') {
+        console.log('테스트 계정 로그인 성공');
+        onLogin();
+      } else {
+        alert('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: admin / admin)');
       }
-
-      const data = await response.json();
-      console.log('로그인 성공:', data);
-      onLogin();
-    } catch (error) {
-      console.error(error);
-      alert('아이디 또는 비밀번호가 일치하지 않습니다.');
-    } finally {
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (
@@ -60,15 +48,15 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300 font-semibold ml-1">이메일</Label>
+              <Label htmlFor="email" className="text-slate-300 font-semibold ml-1">아이디 또는 이메일</Label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
                   <Mail size={18} />
                 </div>
                 <Input
                   id="email"
-                  type="email"
-                  placeholder="name@company.com"
+                  type="text"
+                  placeholder="admin 또는 name@company.com"
                   className="pl-11 bg-slate-900/50 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 focus-visible:border-blue-500 h-12 rounded-xl transition-all"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
