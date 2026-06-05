@@ -11,4 +11,5 @@ public class ProjectRequestDto {
     private String title;
     private String description;
     private String baseUrl;
+    private String userId; // 프로젝트 생성자 아이디
 }
