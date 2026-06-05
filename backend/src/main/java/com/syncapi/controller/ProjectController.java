@@ -1,6 +1,7 @@
 package com.syncapi.controller;
 
-import com.syncapi.model.Project;
+import com.syncapi.dto.project.ProjectRequestDto;
+import com.syncapi.dto.project.ProjectResponseDto;
 import com.syncapi.service.ProjectService;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +17,15 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
+    // 프로젝트 목록 조회 API
     @GetMapping
-    public List<Project> getProjects() {
+    public List<ProjectResponseDto> getProjects() {
         return projectService.getAllProjects();
     }
 
+    // 프로젝트 생성 API
     @PostMapping
-    public Project createProject(@RequestBody Project project) {
-        return projectService.createProject(project);
+    public ProjectResponseDto createProject(@RequestBody ProjectRequestDto requestDto) {
+        return projectService.createProject(requestDto);
     }
 }
