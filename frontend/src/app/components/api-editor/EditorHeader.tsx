@@ -8,6 +8,7 @@ interface EditorHeaderProps {
   onUpdateMethod: (method: ApiItem['method']) => void;
   onSave: () => void;
   onExportPostman: () => void;
+  readOnly?: boolean;
 }
 
 const httpMethods: ApiItem['method'][] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
@@ -18,6 +19,7 @@ export default function EditorHeader({
   onUpdateMethod,
   onSave,
   onExportPostman,
+  readOnly,
 }: EditorHeaderProps) {
   const getMethodColor = (method: string, isActive: boolean) => {
     if (!isActive) return 'bg-gray-100 text-gray-400 hover:bg-gray-200';
@@ -32,52 +34,57 @@ export default function EditorHeader({
   };
 
   return (
-    <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-6 flex-1">
-        {/* Method Badge Group */}
-        <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
-          {httpMethods.map((m) => (
-            <button
-              key={m}
-              onClick={() => onUpdateMethod(m)}
-              className={`px-3 py-1.5 rounded-xl text-[10px] font-black transition-all ${getMethodColor(m, editingApi.method === m)}`}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex-1">
-          <input
-            type="text"
-            value={editingApi.name}
-            onChange={(e) => onUpdateApiName(e.target.value)}
-            className="text-lg font-bold text-gray-900 bg-transparent border-0 focus:ring-0 p-0 w-full"
-          />
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
-              {editingApi.path}
-            </span>
+    <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm animate-in slide-in-from-top-4 duration-500">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="space-y-4 flex-1 min-w-0">
+          <div className="flex items-center gap-4 w-full">
+            <input
+              type="text"
+              value={editingApi.name}
+              onChange={(e) => onUpdateApiName(e.target.value)}
+              disabled={readOnly}
+              className="text-3xl font-black bg-transparent border-none focus:ring-0 p-0 text-gray-900 placeholder:text-gray-300 flex-1 min-w-0 disabled:bg-transparent disabled:opacity-80"
+              placeholder="API 이름을 입력하세요"
+            />
+            <div className="shrink-0 bg-gray-50/80 rounded-xl px-4 py-2 border border-gray-100/50 font-mono text-sm text-gray-500 flex items-center backdrop-blur-sm max-w-[250px] sm:max-w-[300px] md:max-w-[400px]">
+              <span className="text-gray-400 select-none mr-1 shrink-0">/</span>
+              <span className="truncate block">{editingApi.path}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex shrink-0 bg-gray-50/80 p-1.5 rounded-xl border border-gray-100/50 backdrop-blur-sm">
+              {httpMethods.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => onUpdateMethod(m)}
+                  disabled={readOnly}
+                  className={`px-4 py-2 rounded-lg text-xs font-black tracking-widest transition-all duration-300 ${getMethodColor(m, editingApi.method === m)}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            onClick={onExportPostman}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all duration-300 shadow-sm"
+          >
+            <Download size={18} />
+            <span className="text-sm">포스트맨 내보내기</span>
+          </button>
+          {!readOnly && (
+            <button
+              onClick={onSave}
+              className="flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-white bg-gray-900 hover:bg-black transition-all duration-300 shadow-[0_8px_16px_-6px_rgba(0,0,0,0.3)] hover:shadow-[0_12px_20px_-6px_rgba(0,0,0,0.4)] hover:-translate-y-0.5"
+            >
+              <Save size={18} />
+              <span className="text-sm tracking-wide">저장하기</span>
+            </button>
+          )}
+        </div>
       </div>
-      
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={onExportPostman}
-          title="Postman Export"
-          className="p-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center"
-        >
-          <Download size={18} />
-        </button>
-        <button 
-          onClick={onSave}
-          title="저장하기"
-          className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100 flex items-center justify-center"
-        >
-          <Save size={18} />
-        </button>
-      </div>
-    </header>
+    </div>
   );
 }

@@ -39,4 +39,13 @@ public class ApiSpecController {
     public ApiSpecResponseDto createApiSpec(@RequestBody ApiSpecRequestDto requestDto) {
         return apiSpecService.createApiSpec(requestDto);
     }
+    @PutMapping("/{apiId}")
+    public ApiSpecResponseDto updateApiSpec(@PathVariable String apiId, @RequestBody ApiSpecRequestDto requestDto) {
+        return apiSpecService.updateApiSpec(apiId, requestDto);
+    }
+
+    @DeleteMapping("/{apiId}")
+    public void deleteApiSpec(@PathVariable String apiId) {
+        apiSpecService.deleteApiSpec(apiId);
+    }
 }

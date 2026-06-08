@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, User, Filter, History as HistoryIcon, Search } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 interface HistoryTimelineProps {
   projectId: string | null;
+  onNavigateToApi?: (apiId: string) => void;
 }
 
 const users = [
@@ -13,9 +14,15 @@ const users = [
   { id: '3', name: '박지훈' },
 ];
 
-export default function HistoryTimeline({ projectId }: HistoryTimelineProps) {
-  const { activities } = useStore();
+export default function HistoryTimeline({ projectId, onNavigateToApi }: HistoryTimelineProps) {
+  const { activities, fetchActivities } = useStore();
   const [selectedUser, setSelectedUser] = useState('all');
+
+  useEffect(() => {
+    if (projectId) {
+      fetchActivities(projectId);
+    }
+  }, [projectId]);
 
   // Get activities from store
   const projectActivities = projectId ? (activities[projectId] || []) : [];
@@ -126,11 +133,39 @@ export default function HistoryTimeline({ projectId }: HistoryTimelineProps) {
                         <div className="flex items-center gap-2">
                           <span className="font-black text-gray-900">{activity.user.name}</span>
                           <span className="text-gray-400 font-medium">님이</span>
-                          <span className="font-black text-blue-600 underline decoration-2 underline-offset-4 cursor-pointer">{activity.target}</span>
+                          {(() => {
+                            // API 이름 찾기
+                            let apiName = '알 수 없는 API';
+                            const state = useStore.getState();
+                            const tree = state.apiTrees[projectId] || [];
+                            for (const folder of tree) {
+                              const found = folder.apis.find(a => a.id === activity.targetId);
+                              if (found) { apiName = found.name; break; }
+                            }
+                            return (
+                              <span className="font-black text-blue-600 underline decoration-2 underline-offset-4 cursor-pointer">{apiName}</span>
+                            );
+                          })()}
                           <span className="text-gray-400 font-medium">를</span>
-                          <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${getActionColor(activity.action)}`}>
-                            {activity.action}
-                          </span>
+                          {(() => {
+                            let action = activity.action;
+                            if (activity.target) {
+                              const lines = activity.target.split('\n');
+                              const hasAdd = lines.some(l => l.startsWith('+'));
+                              const hasSub = lines.some(l => l.startsWith('-'));
+                              const hasMod = lines.some(l => l.startsWith('±') || (!l.startsWith('+') && !l.startsWith('-') && lines.length > 1));
+                              if (hasAdd && !hasSub && !hasMod) action = '추가';
+                              else if (!hasAdd && hasSub && !hasMod) action = '삭제';
+                              else action = '수정';
+                            }
+                            return (
+                              <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                                action === '생성' || action === '추가' ? 'bg-green-50 text-green-600' :
+                                action === '수정' ? 'bg-blue-50 text-blue-600' :
+                                'bg-red-50 text-red-600'
+                              }`}>{action}</span>
+                            );
+                          })()}
                           <span className="text-gray-400 font-medium">했습니다.</span>
                         </div>
                         <div className="flex items-center gap-3 text-[11px] font-bold text-gray-400 uppercase tracking-tighter">
@@ -145,22 +180,16 @@ export default function HistoryTimeline({ projectId }: HistoryTimelineProps) {
                     </div>
 
                     {/* Change Diff View */}
-                    {activity.changes && (
+                    {activity.target && (
                       <div className="space-y-3">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Changes Summary</p>
-                        <div className="bg-gray-900 rounded-2xl p-6 font-mono text-sm shadow-inner group-hover:shadow-lg transition-all">
-                          {activity.changes.map((line, lIdx) => (
-                            <div 
-                              key={lIdx} 
-                              className={`flex items-start gap-4 py-1 ${
-                                line.type === 'added' ? 'text-green-400' : 
-                                line.type === 'removed' ? 'text-red-400' : 'text-gray-500'
-                              }`}
-                            >
-                              <span className="w-4 font-black">{line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}</span>
-                              <span className={line.type === 'removed' ? 'line-through opacity-50' : ''}>{line.content}</span>
-                            </div>
-                          ))}
+                        <div className="text-xs text-gray-300 bg-[#0d1117] p-4 rounded-xl border border-gray-800 font-mono whitespace-pre-wrap leading-relaxed shadow-inner">
+                          {activity.target.split('\n').map((line: string, i: number) => {
+                            if (line.startsWith('+')) return <div key={i} className="text-[#3fb950] font-bold bg-[#2ea0431a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                            if (line.startsWith('-')) return <div key={i} className="text-[#f85149] font-bold bg-[#f851491a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                            if (line.startsWith('±')) return <div key={i} className="text-[#58a6ff] font-medium bg-[#388bfd1a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                            return <div key={i} className="px-2 py-0.5">{line}</div>;
+                          })}
                         </div>
                       </div>
                     )}
@@ -169,7 +198,12 @@ export default function HistoryTimeline({ projectId }: HistoryTimelineProps) {
                   {/* Card Footer */}
                   <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-[10px] font-bold text-gray-400">Event ID: {activity.id}</span>
-                    <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">View Full Details</button>
+                    <button 
+                      onClick={() => onNavigateToApi && onNavigateToApi(activity.targetId)}
+                      className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                    >
+                      View Full Details
+                    </button>
                   </div>
                 </div>
               </div>

@@ -18,16 +18,17 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
     e.preventDefault();
     setIsLoading(true);
 
-    // 프런트엔드 테스트용 어드민 계정 확인
-    setTimeout(() => {
-      if (email === 'admin' && password === 'admin') {
-        console.log('테스트 계정 로그인 성공');
-        onLogin();
-      } else {
-        alert('아이디 또는 비밀번호가 일치하지 않습니다. (테스트 계정: admin / admin)');
-      }
+    try {
+      const { login } = await import('../../api/authApi');
+      const user = await login({ email, password });
+      console.log('로그인 성공', user);
+      localStorage.setItem('user', JSON.stringify(user));
+      onLogin();
+    } catch (error: any) {
+      alert(error.response?.data?.message || '아이디 또는 비밀번호가 일치하지 않습니다.');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (

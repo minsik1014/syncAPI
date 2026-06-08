@@ -28,4 +28,15 @@ public class FolderController {
     public FolderResponseDto createFolder(@RequestBody FolderRequestDto requestDto) {
         return folderService.createFolder(requestDto);
     }
+    // 폴더 이름 수정
+    @PutMapping("/{folderId}")
+    public FolderResponseDto updateFolder(@PathVariable String folderId, @RequestBody FolderRequestDto requestDto) {
+        return folderService.updateFolder(folderId, requestDto.getName());
+    }
+
+    // 폴더 삭제
+    @DeleteMapping("/{folderId}")
+    public void deleteFolder(@PathVariable String folderId) {
+        folderService.deleteFolder(folderId);
+    }
 }

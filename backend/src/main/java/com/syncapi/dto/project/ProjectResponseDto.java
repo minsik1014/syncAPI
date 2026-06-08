@@ -16,6 +16,11 @@ public class ProjectResponseDto {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime lastUpdated;
+    
+    // 추가된 통계 필드
+    private long todayRequests;
+    private long avgLatency;
+    private long apiCount;
 
     // Entity 객체를 DTO로 안전하게 변환하는 정적 메서드
     public static ProjectResponseDto from(Project project) {
@@ -27,6 +32,22 @@ public class ProjectResponseDto {
                 .status(project.getStatus())
                 .createdAt(project.getCreatedAt())
                 .lastUpdated(project.getLastUpdated())
+                .build();
+    }
+    
+    // 통계 데이터를 포함해서 생성하는 메서드
+    public static ProjectResponseDto fromWithStats(Project project, long todayRequests, long avgLatency, long apiCount) {
+        return ProjectResponseDto.builder()
+                .id(project.getId())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .baseUrl(project.getBaseUrl())
+                .status(project.getStatus())
+                .createdAt(project.getCreatedAt())
+                .lastUpdated(project.getLastUpdated())
+                .todayRequests(todayRequests)
+                .avgLatency(avgLatency)
+                .apiCount(apiCount)
                 .build();
     }
 }

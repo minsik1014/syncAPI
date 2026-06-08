@@ -70,4 +70,19 @@ public class ProjectMemberService {
 
         memberRepository.delete(member);
     }
+
+    // 팀원 권한 수정
+    @Transactional
+    public MemberResponseDto updateRole(String memberId, String newRole) {
+        ProjectMember member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 멤버입니다."));
+        
+        // OWNER(방장)의 권한은 강등할 수 없음
+        if("OWNER".equals(member.getRole())) {
+            throw new IllegalArgumentException("프로젝트 소유자의 권한은 변경할 수 없습니다.");
+        }
+
+        member.setRole(newRole);
+        return MemberResponseDto.from(member);
+    }
 }

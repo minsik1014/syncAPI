@@ -13,6 +13,7 @@ interface SpecEditorProps {
   onRemoveField: (category: 'request' | 'response', type: 'params' | 'headers' | 'body', id: string) => void;
   onAddField: (category: 'request' | 'response', type: 'params' | 'headers' | 'body') => void;
   onOpenImport: (category: 'request' | 'response', type: 'body' | 'headers') => void;
+  readOnly?: boolean;
 }
 
 export default function SpecEditor({
@@ -26,6 +27,7 @@ export default function SpecEditor({
   onRemoveField,
   onAddField,
   onOpenImport,
+  readOnly,
 }: SpecEditorProps) {
   return (
     <div className="max-w-5xl space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -78,6 +80,7 @@ export default function SpecEditor({
               onRemoveField={onRemoveField}
               onAddField={onAddField}
               onOpenImport={onOpenImport}
+              readOnly={readOnly}
             />
           </div>
         </div>
@@ -115,6 +118,7 @@ export default function SpecEditor({
               onRemoveField={onRemoveField}
               onAddField={onAddField}
               onOpenImport={onOpenImport}
+              readOnly={readOnly}
             />
           </div>
         </div>

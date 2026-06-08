@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Code, Calendar } from 'lucide-react';
+import { Plus, Code, Calendar, Trash2 } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -14,12 +14,14 @@ interface ProjectGridProps {
   projects: Project[];
   onSelectProject: (id: string) => void;
   onOpenModal: () => void;
+  onDeleteProject: (id: string) => void;
 }
 
 export default function ProjectGrid({
   projects,
   onSelectProject,
   onOpenModal,
+  onDeleteProject,
 }: ProjectGridProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -44,14 +46,23 @@ export default function ProjectGrid({
             className="group bg-white rounded-[2.5rem] border border-gray-100 hover:border-blue-200 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 overflow-hidden text-left p-8 space-y-6"
           >
             <div className="flex items-start justify-between">
-              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
-                <Code size={28} />
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors duration-500">
+                  <Code size={28} />
+                </div>
+                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  project.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'
+                }`}>
+                  {project.status}
+                </div>
               </div>
-              <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                project.status === 'active' ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-400'
-              }`}>
-                {project.status}
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDeleteProject(project.id); }}
+                className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+                title="프로젝트 삭제"
+              >
+                <Trash2 size={18} />
+              </button>
             </div>
             <div className="space-y-2">
               <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">{project.title}</h3>

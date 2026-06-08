@@ -6,7 +6,10 @@ import EditorHeader from '../components/api-editor/EditorHeader';
 import SpecEditor from '../components/api-editor/SpecEditor';
 import CodeGenerator from '../components/api-editor/CodeGenerator';
 import MockTester from '../components/api-editor/MockTester';
+import { MemberManagementModal } from '../../components/MemberManagementModal';
+import { useMemberStore } from '../../store/useMemberStore';
 import { ApiItem } from '../types/api';
+import { generateEndpointFromName } from '../utils/endpointGenerator';
 
 interface ApiEditorProps {
   projectId: string | null;
@@ -24,6 +27,7 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
     setEditingApi,
     activeTab,
     setActiveTab,
+    activities,
     requestTab,
     setRequestTab,
     responseTab,
@@ -63,9 +67,35 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
     onExportPostman,
   } = useApiEditor(projectId);
 
+  // 멤버 및 권한 로직
+  const { members, fetchMembers } = useMemberStore();
+  React.useEffect(() => {
+    if (projectId) fetchMembers(projectId);
+  }, [projectId]);
+  
+  const currentUserStr = localStorage.getItem('user');
+  const currentUserId = currentUserStr ? JSON.parse(currentUserStr).id : null;
+  const currentMember = members.find(m => m.userId === currentUserId);
+  // 방장 확인 또는 권한 설정 (로컬에선 일단 멤버 목록을 보고 판단)
+  const currentUserRole = currentMember?.role || 'VIEWER';
+  const isViewer = currentUserRole === 'VIEWER';
+
   // New API Modal State
   const [newApiName, setNewApiName] = useState('');
   const [newApiMethod, setNewApiMethod] = useState<ApiItem['method']>('GET');
+  const [newApiPath, setNewApiPath] = useState('');
+  const [showMemberModal, setShowMemberModal] = useState(false);
+
+  React.useEffect(() => {
+    if (newApiName.trim()) {
+      const generated = generateEndpointFromName(newApiName);
+      setNewApiPath(generated.path);
+      setNewApiMethod(generated.method as ApiItem['method']);
+    } else {
+      setNewApiPath('');
+      setNewApiMethod('GET');
+    }
+  }, [newApiName]);
 
   const getMethodColor = (method: string, isActive: boolean) => {
     if (!isActive) return 'bg-gray-100 text-gray-400 hover:bg-gray-200';
@@ -93,37 +123,45 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
   }
 
   return (
-    <div className="h-full flex bg-white relative font-sans">
+    <div className="h-full flex bg-white">
       <EditorSidebar
+        projectId={projectId}
         folders={folders}
         selectedApiId={selectedApiId}
         selectedFolderId={selectedFolderId}
         onSelectApi={handleSelectApi}
         onSelectFolder={setSelectedFolderId}
-        onCreateApi={() => {
-          setNewApiName('');
-          setNewApiMethod('GET');
-          setShowCreateApiModal(true);
-        }}
+        onAddApi={() => setShowCreateApiModal(true)}
         onDeleteApi={handleDeleteApi}
         onRenameApi={handleRenameApi}
-        onCreateFolder={handleCreateFolder}
+        onAddFolder={handleCreateFolder}
         onRenameFolder={handleRenameFolder}
         onDeleteFolder={handleDeleteFolder}
+        readOnly={isViewer}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenMemberModal={() => setShowMemberModal(true)}
       />
 
+      {/* Main Content */}
       {editingApi ? (
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/50">
           <EditorHeader
             editingApi={editingApi}
-            onUpdateApiName={(name) => setEditingApi({ ...editingApi, name })}
+            onUpdateApiName={(name) => {
+              const generated = generateEndpointFromName(name, editingApi.method);
+              setEditingApi({ 
+                ...editingApi, 
+                name,
+                path: generated.path,
+                method: generated.method as ApiItem['method']
+              });
+            }}
             onUpdateMethod={onUpdateMethod}
             onSave={handleSave}
             onExportPostman={onExportPostman}
+            readOnly={isViewer}
           />
-
           <div className="bg-white px-8 border-b border-gray-100 shadow-sm z-10">
             <div className="flex gap-8">
               {[
@@ -164,6 +202,7 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
                   setShowImportModal(true);
                   setImportJson('');
                 }}
+                readOnly={isViewer}
               />
             )}
             {activeTab === 'code' && (
@@ -180,9 +219,69 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
               />
             )}
             {activeTab === 'history' && (
-              <div className="max-w-3xl mx-auto text-center py-20">
-                <History className="text-gray-300 mx-auto mb-6" size={48} />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">변경 이력이 없습니다</h3>
+              <div className="max-w-3xl mx-auto py-10 space-y-8">
+                {activities && projectId && activities[projectId]?.filter(a => a.targetId === editingApi.id).length > 0 ? (
+                  <div className="relative pl-8 space-y-8">
+                    <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gray-200" />
+                    {activities[projectId].filter(a => a.targetId === editingApi.id).map((activity, idx) => (
+                      <div key={activity.id} className="relative animate-in fade-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
+                        <div className="absolute -left-12 flex items-center justify-center w-8 h-8">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center border-2 border-white shadow-sm relative z-20 text-blue-600">
+                            <span className="text-[10px] font-bold">{activity.user.name[0]}</span>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 text-sm">{activity.user.name}</span>
+                              <span className="text-gray-500 text-sm">님이 명세를</span>
+                              {(() => {
+                                let action = activity.action;
+                                if (activity.target && activity.target !== editingApi.id) {
+                                  const lines = activity.target.split('\n');
+                                  const hasAdd = lines.some(l => l.startsWith('+'));
+                                  const hasSub = lines.some(l => l.startsWith('-'));
+                                  const hasMod = lines.some(l => l.startsWith('±') || (!l.startsWith('+') && !l.startsWith('-')));
+                                  if (hasAdd && !hasSub && !hasMod) action = '추가';
+                                  else if (!hasAdd && hasSub && !hasMod) action = '삭제';
+                                  else action = '수정';
+                                }
+                                return (
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    action === '생성' || action === '추가' ? 'bg-green-50 text-green-600' :
+                                    action === '수정' ? 'bg-blue-50 text-blue-600' :
+                                    'bg-red-50 text-red-600'
+                                  }`}>{action}</span>
+                                );
+                              })()}
+                              <span className="text-gray-500 text-sm">했습니다.</span>
+                            </div>
+                            <span className="text-xs text-gray-400 font-medium">{activity.timeAgo}</span>
+                          </div>
+                          {activity.target && activity.target !== editingApi.id && (
+                            <div className="mt-4">
+                              <div className="text-xs font-bold text-gray-400 mb-1.5 ml-1">Changes Summary</div>
+                              <div className="text-xs text-gray-300 bg-[#0d1117] p-4 rounded-xl border border-gray-800 font-mono whitespace-pre-wrap leading-relaxed shadow-inner">
+                                {activity.target.split('\n').map((line: string, i: number) => {
+                                  if (line.startsWith('+')) return <div key={i} className="text-[#3fb950] font-bold bg-[#2ea0431a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                                  if (line.startsWith('-')) return <div key={i} className="text-[#f85149] font-bold bg-[#f851491a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                                  if (line.startsWith('±')) return <div key={i} className="text-[#58a6ff] font-medium bg-[#388bfd1a] px-2 py-0.5 rounded -mx-2">{line}</div>;
+                                  return <div key={i} className="px-2 py-0.5">{line}</div>;
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20">
+                    <History className="text-gray-300 mx-auto mb-6" size={48} />
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">변경 이력이 없습니다</h3>
+                    <p className="text-gray-500 text-sm">이 API의 수정 내역이 아직 기록되지 않았습니다.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -233,6 +332,19 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
                   ))}
                 </div>
               </div>
+              <div className="space-y-3">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Endpoint Path</label>
+                <div className="flex bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 items-center focus-within:bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+                  <span className="text-gray-400 font-mono text-sm select-none">/</span>
+                  <input
+                    type="text"
+                    value={newApiPath.replace(/^\//, '')}
+                    onChange={(e) => setNewApiPath('/' + e.target.value.replace(/^\//, ''))}
+                    placeholder="api/v1/resource"
+                    className="w-full bg-transparent border-0 focus:ring-0 text-gray-900 font-mono text-sm p-0 ml-1"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4 mt-10">
@@ -243,7 +355,10 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
                 취소
               </button>
               <button
-                onClick={() => handleCreateApi(newApiName || '새로운 API', newApiMethod)}
+                onClick={() => {
+                  handleCreateApi(newApiName || '새로운 API', newApiMethod, newApiPath);
+                  setShowCreateApiModal(false);
+                }}
                 className="flex-2 px-10 py-4 bg-gray-900 text-white rounded-2xl hover:bg-black transition-all font-black text-sm shadow-xl shadow-gray-200"
               >
                 생성하기
@@ -297,6 +412,14 @@ export default function ApiEditor({ projectId }: ApiEditorProps) {
           </div>
         </div>
       )}
+
+      {/* 멤버 및 권한 관리 모달 */}
+      <MemberManagementModal
+        projectId={projectId}
+        isOpen={showMemberModal}
+        onOpenChange={setShowMemberModal}
+        currentUserRole={currentUserRole} 
+      />
     </div>
   );
 }

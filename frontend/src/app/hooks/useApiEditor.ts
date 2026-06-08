@@ -4,9 +4,10 @@ import { useStore, ApiItem, Field } from '../store/useStore';
 import { parseJsonToFields } from '../utils/jsonParser';
 import { parseOpenApi } from '../utils/openapiParser';
 import { exportToPostman } from '../utils/exportUtils';
+import { generateEndpointFromName } from '../utils/endpointGenerator';
 
 export function useApiEditor(projectId: string | null) {
-  const { apiTrees, updateApi, projects, importFolders } = useStore();
+  const { apiTrees, updateApi, projects, importFolders, activities } = useStore();
   
   const folders = projectId ? (apiTrees[projectId] || []) : [];
   const currentProject = projects.find(p => p.id === projectId);
@@ -31,13 +32,46 @@ export function useApiEditor(projectId: string | null) {
   const [importTarget, setImportTarget] = useState<{ category: 'request' | 'response', type: 'body' | 'headers' } | null>(null);
 
   useEffect(() => {
-    if (folders.length > 0 && folders[0].apis.length > 0 && !selectedApiId) {
-      const firstApi = folders[0].apis[0];
-      setSelectedApiId(firstApi.id);
-      setEditingApi({ ...firstApi });
-      setSelectedFolderId(folders[0].id);
+    if (projectId) {
+      useStore.getState().fetchActivities(projectId);
+      useStore.getState().fetchApiTrees(projectId).then(() => {
+        const state = useStore.getState();
+        const currentFolders = state.apiTrees[projectId] || [];
+        const activeApiId = state.activeApiId;
+
+        if (currentFolders.length > 0) {
+          let targetApi = null;
+          let targetFolderId = null;
+
+          if (activeApiId) {
+            for (const folder of currentFolders) {
+              const found = folder.apis.find(a => a.id === activeApiId);
+              if (found) {
+                targetApi = found;
+                targetFolderId = folder.id;
+                break;
+              }
+            }
+          }
+
+          if (!targetApi && currentFolders[0].apis.length > 0 && !selectedApiId) {
+            targetApi = currentFolders[0].apis[0];
+            targetFolderId = currentFolders[0].id;
+          }
+
+          if (targetApi && targetFolderId) {
+            setSelectedApiId(targetApi.id);
+            setEditingApi({ ...targetApi });
+            setSelectedFolderId(targetFolderId);
+          }
+
+          if (activeApiId) {
+            state.setActiveApiId(null);
+          }
+        }
+      });
     }
-  }, [projectId, folders, selectedApiId]);
+  }, [projectId]);
 
   const handleSelectApi = (api: ApiItem) => {
     setSelectedApiId(api.id);
@@ -56,11 +90,34 @@ export function useApiEditor(projectId: string | null) {
   };
 
   const handleRenameApi = (apiId: string, currentName: string) => {
-    const newName = prompt('API 이름을 입력하세요:', currentName);
-    if (newName && newName !== currentName && projectId) {
-      updateApi(projectId, apiId, { name: newName });
+    if (!projectId) return;
+    const newName = window.prompt('새 API 이름을 입력하세요:', currentName);
+    if (newName && newName !== currentName) {
+      // API를 찾아서 현재 메서드를 가져옴
+      const apiTrees = useStore.getState().apiTrees[projectId] || [];
+      let currentMethod = 'GET';
+      for (const folder of apiTrees) {
+        const api = folder.apis.find(a => a.id === apiId);
+        if (api) {
+          currentMethod = api.method;
+          break;
+        }
+      }
+      
+      const generated = generateEndpointFromName(newName, currentMethod);
+      useStore.getState().updateApi(projectId, apiId, { 
+        name: newName,
+        path: generated.path,
+        method: generated.method as ApiItem['method']
+      });
+      
       if (editingApi?.id === apiId) {
-        setEditingApi({ ...editingApi, name: newName });
+        setEditingApi({ 
+          ...editingApi, 
+          name: newName,
+          path: generated.path,
+          method: generated.method as ApiItem['method']
+        });
       }
     }
   };
@@ -75,12 +132,18 @@ export function useApiEditor(projectId: string | null) {
   const handleSave = () => {
     if (!projectId || !selectedApiId || !editingApi) return;
     updateApi(projectId, selectedApiId, editingApi);
-    toast.success('API 명세가 저장되었습니다!');
+    toast.success('API 명세가 수동으로 저장되었습니다!');
   };
+
+  // 자동 저장 로직 제거 (수동 저장 버튼만 사용)
 
   const updateField = (category: 'request' | 'response', type: 'params' | 'headers' | 'body', id: string, updates: Partial<Field>) => {
     if (!editingApi) return;
-    const updatedApi = { ...editingApi };
+    const updatedApi = {
+      ...editingApi,
+      request: { ...editingApi.request },
+      response: { ...editingApi.response }
+    };
     const fields = category === 'request' ? updatedApi.request[type] : updatedApi.response[type as 'headers' | 'body'];
     const updatedFields = fields.map(f => f.id === id ? { ...f, ...updates } : f);
     
@@ -92,15 +155,23 @@ export function useApiEditor(projectId: string | null) {
   const addField = (category: 'request' | 'response', type: 'params' | 'headers' | 'body') => {
     if (!editingApi) return;
     const newField: Field = { id: Date.now().toString(), name: '', type: 'string', required: false, description: '' };
-    const updatedApi = { ...editingApi };
-    if (category === 'request') updatedApi.request[type] = [...updatedApi.request[type], newField];
-    else updatedApi.response[type as 'headers' | 'body'] = [...updatedApi.response[type as 'headers' | 'body'], newField];
+    const updatedApi = {
+      ...editingApi,
+      request: { ...editingApi.request },
+      response: { ...editingApi.response }
+    };
+    if (category === 'request') updatedApi.request[type] = [...(updatedApi.request[type] || []), newField];
+    else updatedApi.response[type as 'headers' | 'body'] = [...(updatedApi.response[type as 'headers' | 'body'] || []), newField];
     setEditingApi(updatedApi);
   };
 
   const removeField = (category: 'request' | 'response', type: 'params' | 'headers' | 'body', id: string) => {
     if (!editingApi) return;
-    const updatedApi = { ...editingApi };
+    const updatedApi = {
+      ...editingApi,
+      request: { ...editingApi.request },
+      response: { ...editingApi.response }
+    };
     if (category === 'request') updatedApi.request[type] = updatedApi.request[type].filter(f => f.id !== id);
     else updatedApi.response[type as 'headers' | 'body'] = updatedApi.response[type as 'headers' | 'body'].filter(f => f.id !== id);
     setEditingApi(updatedApi);
@@ -119,12 +190,28 @@ export function useApiEditor(projectId: string | null) {
       setResponseData(JSON.stringify({ status: forcedError, error: 'Error', message: `Forced ${forcedError} error` }, null, 2));
       toast.error(`Mock API 요청 실패 (${forcedError})`);
     } else {
-      const mockRes: any = {};
-      editingApi.response.body.forEach(f => {
-        mockRes[f.name || 'key'] = f.type === 'number' ? 123 : f.type === 'boolean' ? true : `mock_${f.name}`;
-      });
-      setResponseData(JSON.stringify(mockRes, null, 2));
-      toast.success('Mock API 요청 성공!');
+      try {
+        const url = `http://localhost:8082/mock/${projectId}${editingApi.path}`;
+        const res = await fetch(url, {
+          method: editingApi.method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        const data = await res.json();
+        
+        if (!res.ok) {
+          setResponseData(JSON.stringify(data, null, 2));
+          toast.error(`Mock API 에러: ${res.status}`);
+        } else {
+          setResponseData(JSON.stringify(data, null, 2));
+          toast.success('실제 백엔드 Mock API 응답 완료!');
+        }
+      } catch (error: any) {
+        setResponseData(JSON.stringify({ error: 'Network Error', message: error.message }, null, 2));
+        toast.error('백엔드 Mock API 요청 실패');
+      }
     }
     setIsLoading(false);
   };
@@ -180,7 +267,7 @@ export function useApiEditor(projectId: string | null) {
     toast.success('폴더가 삭제되었습니다.');
   };
 
-  const handleCreateApi = (name: string, method: ApiItem['method']) => {
+  const handleCreateApi = (name: string, method: ApiItem['method'], path?: string) => {
     if (!projectId) return;
 
     let targetFolderId = selectedFolderId;
@@ -195,11 +282,15 @@ export function useApiEditor(projectId: string | null) {
       }
     }
 
+    const generated = generateEndpointFromName(name, method);
+    const finalMethod = method || generated.method;
+    const finalPath = path || generated.path;
+
     const newApi: ApiItem = {
       id: `api-${Date.now()}`,
       name: name,
-      method: method,
-      path: '/api/new-endpoint',
+      method: finalMethod as ApiItem['method'],
+      path: finalPath,
       description: '이 API에 대한 설명을 입력하세요.',
       request: { params: [], headers: [], body: [] },
       response: { headers: [], body: [], statusCode: 200 },
@@ -210,16 +301,20 @@ export function useApiEditor(projectId: string | null) {
     const finalFolderId = targetFolderId || (currentFolders.length > 0 ? currentFolders[0].id : '');
 
     if (finalFolderId) {
-      useStore.getState().addApi(projectId, finalFolderId, newApi);
-      handleSelectApi(newApi);
-      toast.success(`'${name}' API가 추가되었습니다!`);
-      setShowCreateApiModal(false);
+      useStore.getState().addApi(projectId, finalFolderId, newApi).then((realId) => {
+        if (realId) {
+          handleSelectApi({ ...newApi, id: realId });
+          toast.success(`'${name}' API가 추가되었습니다!`);
+          setShowCreateApiModal(false);
+        }
+      });
     }
   };
 
   return {
     folders,
     currentProject,
+    activities,
     selectedApiId,
     selectedFolderId,
     setSelectedFolderId,

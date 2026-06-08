@@ -2,9 +2,14 @@ package com.syncapi.repository;
 
 import com.syncapi.model.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, String> {
-    // 기본 CRUD 쿼리 자동 생성
+    @Query("SELECT p FROM Project p JOIN p.members m WHERE m.user.id = :userId")
+    List<Project> findProjectsByUserId(@Param("userId") String userId);
 }

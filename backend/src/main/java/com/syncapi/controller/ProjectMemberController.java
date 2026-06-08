@@ -2,6 +2,7 @@ package com.syncapi.controller;
 
 import com.syncapi.dto.member.MemberInviteRequestDto;
 import com.syncapi.dto.member.MemberResponseDto;
+import com.syncapi.dto.member.MemberRoleUpdateRequestDto;
 import com.syncapi.service.ProjectMemberService;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,5 +33,11 @@ public class ProjectMemberController {
     @DeleteMapping("/{memberId}")
     public void removeMember(@PathVariable String memberId) {
         memberService.removeMember(memberId);
+    }
+
+    // PUT /api/members/{memberId}/role - 멤버 권한 수정
+    @PutMapping("/{memberId}/role")
+    public MemberResponseDto updateRole(@PathVariable String memberId, @RequestBody MemberRoleUpdateRequestDto request) {
+        return memberService.updateRole(memberId, request.getRole());
     }
 }

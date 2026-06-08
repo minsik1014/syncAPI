@@ -1,21 +1,24 @@
 import React from 'react';
-import { Search, Folder, Star, Plus, Edit2, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import { Search, Folder, Star, Plus, Edit2, Trash2, ChevronRight, ChevronDown, Users } from 'lucide-react';
 import { FolderItem, ApiItem } from '../../store/useStore';
 
 interface EditorSidebarProps {
+  projectId: string | null;
   folders: FolderItem[];
   selectedApiId: string | null;
   selectedFolderId: string | null;
   onSelectApi: (api: ApiItem) => void;
   onSelectFolder: (folderId: string) => void;
-  onCreateApi: () => void;
+  onAddApi: () => void;
   onDeleteApi: (apiId: string) => void;
   onRenameApi: (apiId: string, currentName: string) => void;
-  onCreateFolder: () => void;
+  onAddFolder: () => void;
   onRenameFolder: (folderId: string, currentName: string) => void;
   onDeleteFolder: (folderId: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onOpenMemberModal?: () => void;
+  readOnly?: boolean;
 }
 
 export default function EditorSidebar({
@@ -24,14 +27,16 @@ export default function EditorSidebar({
   selectedFolderId,
   onSelectApi,
   onSelectFolder,
-  onCreateApi,
+  onAddApi,
   onDeleteApi,
   onRenameApi,
-  onCreateFolder,
+  onAddFolder,
   onRenameFolder,
   onDeleteFolder,
   searchQuery,
   onSearchChange,
+  onOpenMemberModal,
+  readOnly,
 }: EditorSidebarProps) {
   const getMethodColor = (method: string) => {
     switch (method) {
@@ -71,20 +76,22 @@ export default function EditorSidebar({
                 <Folder size={12} className={selectedFolderId === folder.id ? 'text-blue-500' : 'text-gray-300'} />
                 <span className="text-[11px] font-bold uppercase tracking-widest truncate">{folder.name}</span>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onRenameFolder(folder.id, folder.name); }}
-                  className="p-1 hover:text-blue-600 transition-colors"
-                >
-                  <Edit2 size={10} />
-                </button>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
-                  className="p-1 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 size={10} />
-                </button>
-              </div>
+              {!readOnly && (
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onRenameFolder(folder.id, folder.name); }}
+                    className="p-1 hover:text-blue-600 transition-colors"
+                  >
+                    <Edit2 size={10} />
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
+                    className="p-1 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-0.5">
@@ -114,20 +121,22 @@ export default function EditorSidebar({
                   </button>
                   
                   {/* API Actions */}
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-inherit pr-1">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onRenameApi(api.id, api.name); }}
-                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                    >
-                      <Edit2 size={10} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onDeleteApi(api.id); }}
-                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  </div>
+                  {!readOnly && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-inherit pr-1">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onRenameApi(api.id, api.name); }}
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Edit2 size={10} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); onDeleteApi(api.id); }}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -136,19 +145,30 @@ export default function EditorSidebar({
       </div>
 
       <div className="p-4 border-t border-gray-100 bg-white space-y-2">
+        {!readOnly && (
+          <>
+            <button 
+              onClick={onAddFolder}
+              className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all shadow-sm"
+            >
+              <Folder size={14} className="text-gray-400" />
+              폴더 추가
+            </button>
+            <button 
+              onClick={onAddApi}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-sm shadow-gray-200"
+            >
+              <Plus size={16} />
+              API 추가 {selectedFolderId ? '(선택됨)' : ''}
+            </button>
+          </>
+        )}
         <button 
-          onClick={onCreateFolder}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-all shadow-sm"
+          onClick={onOpenMemberModal}
+          className="w-full flex items-center justify-center gap-2 py-2 mt-2 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-all shadow-sm"
         >
-          <Folder size={14} className="text-gray-400" />
-          폴더 추가
-        </button>
-        <button 
-          onClick={onCreateApi}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-sm shadow-gray-200"
-        >
-          <Plus size={16} />
-          API 추가 {selectedFolderId ? '(선택됨)' : ''}
+          <Users size={14} />
+          팀원 및 권한 관리
         </button>
       </div>
     </aside>

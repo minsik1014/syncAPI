@@ -32,4 +32,8 @@ public class Folder {
     @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ApiSpec> apiSpecs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "folder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<FolderPermission> permissions = new ArrayList<>();
 }

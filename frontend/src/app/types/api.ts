@@ -58,6 +58,7 @@ export interface ActivityEvent {
   };
   action: '생성' | '수정' | '삭제';
   target: string;
+  targetId?: string;
   timestamp: string;
   timeAgo: string;
   changes?: { type: 'added' | 'removed' | 'unchanged'; content: string }[];

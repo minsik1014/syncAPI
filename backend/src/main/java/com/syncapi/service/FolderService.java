@@ -48,4 +48,21 @@ public class FolderService {
         Folder savedFolder = folderRepository.save(folder);
         return FolderResponseDto.from(savedFolder);
     }
+    // 폴더 수정
+    @Transactional
+    public FolderResponseDto updateFolder(String folderId, String newName) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 폴더입니다."));
+        folder.setName(newName);
+        return FolderResponseDto.from(folder);
+    }
+
+    // 폴더 삭제
+    @Transactional
+    public void deleteFolder(String folderId) {
+        if (!folderRepository.existsById(folderId)) {
+            throw new IllegalArgumentException("존재하지 않는 폴더입니다.");
+        }
+        folderRepository.deleteById(folderId);
+    }
 }

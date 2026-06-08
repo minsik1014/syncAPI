@@ -31,4 +31,15 @@ public class UserService {
 
         return UserResponseDto.from(userRepository.save(user));
     }
+
+    public UserResponseDto login(com.syncapi.dto.user.UserLoginRequestDto requestDto) {
+        User user = userRepository.findByEmail(requestDto.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다."));
+        
+        if (!user.getPassword().equals(requestDto.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+        }
+        
+        return UserResponseDto.from(user);
+    }
 }

@@ -5,18 +5,20 @@ interface StatsSummaryProps {
   projectsCount: number;
   totalApis: number;
   totalRequests: number;
+  avgLatency: number;
 }
 
 export default function StatsSummary({
   projectsCount,
   totalApis,
   totalRequests,
+  avgLatency,
 }: StatsSummaryProps) {
   const stats = [
     { label: 'Total Projects', value: projectsCount, icon: Layers, color: 'blue' },
     { label: 'Total APIs', value: totalApis, icon: Code, color: 'purple' },
     { label: 'Today Requests', value: totalRequests.toLocaleString(), icon: Activity, color: 'green' },
-    { label: 'Avg Latency', value: '34ms', icon: TrendingUp, color: 'orange' },
+    { label: 'Avg Latency', value: `${avgLatency}ms`, icon: TrendingUp, color: 'orange' },
   ];
 
   return (

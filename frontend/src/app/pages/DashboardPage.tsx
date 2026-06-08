@@ -10,10 +10,11 @@ import { Project } from '../types/api';
 interface DashboardProps {
   onSelectProject: (projectId: string) => void;
   projects: Project[];
-  onAddProject: (project: Project) => void;
+  onAddProject: (project: Partial<Project>) => Promise<string | null>;
   showCreateModal: boolean;
   onOpenModal: () => void;
   onCloseModal: () => void;
+  onDeleteProject: (projectId: string) => void;
 }
 
 export default function Dashboard({
@@ -23,11 +24,13 @@ export default function Dashboard({
   showCreateModal,
   onOpenModal,
   onCloseModal,
+  onDeleteProject,
 }: DashboardProps) {
   const {
     chartData,
     totalApis,
     totalRequests,
+    avgLatency,
     newProjectName,
     setNewProjectName,
     newProjectDescription,
@@ -58,6 +61,7 @@ export default function Dashboard({
             projectsCount={projects.length}
             totalApis={totalApis}
             totalRequests={totalRequests}
+            avgLatency={avgLatency}
           />
 
           <AnalyticsCharts chartData={chartData} />
@@ -66,6 +70,7 @@ export default function Dashboard({
             projects={projects}
             onSelectProject={onSelectProject}
             onOpenModal={onOpenModal}
+            onDeleteProject={onDeleteProject}
           />
         </div>
       </main>

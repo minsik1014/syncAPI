@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Home, FileCode, Server, History, Plus, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, FileCode, Server, History, Plus, ChevronDown, Trash2 } from 'lucide-react';
 import { Toaster } from 'sonner';
 import DashboardPage from './pages/DashboardPage';
 import ApiEditorPage from './pages/ApiEditorPage';
@@ -18,11 +18,19 @@ export default function App() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   const { 
-    projects, 
+    projects,
     selectedProjectId, 
     setSelectedProjectId, 
-    addProject 
+    addProject,
+    deleteProject,
+    fetchProjects
   } = useStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchProjects();
+    }
+  }, [isAuthenticated, fetchProjects]);
 
   const navigation = [
     { id: 'dashboard' as View, label: '대시보드', icon: Home },
@@ -72,9 +80,26 @@ export default function App() {
               </div>
             ) : (
               <div className="animate-in fade-in slide-in-from-top-1 duration-300">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">
-                  Workspace
-                </label>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                    Workspace
+                  </label>
+                  {selectedProjectId && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm("현재 선택된 워크스페이스를 정말 삭제하시겠습니까? (관련 데이터 영구 삭제)")) {
+                          deleteProject(selectedProjectId);
+                          setSelectedProjectId(null);
+                          setCurrentView('dashboard');
+                        }
+                      }}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="워크스페이스 삭제"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
                 <div className="relative">
                   <select
                     value={selectedProjectId || ''}
@@ -130,11 +155,22 @@ export default function App() {
               showCreateModal={showCreateModal}
               onOpenModal={() => setShowCreateModal(true)}
               onCloseModal={() => setShowCreateModal(false)}
+              onDeleteProject={(id) => {
+                if (window.confirm("정말로 이 프로젝트를 삭제하시겠습니까? 관련된 모든 데이터가 영구히 삭제됩니다.")) {
+                  deleteProject(id);
+                }
+              }}
             />
           )}
           {currentView === 'editor' && <ApiEditorPage projectId={selectedProjectId} />}
           {currentView === 'mock' && <MockServerPage projectId={selectedProjectId} />}
-          {currentView === 'history' && <HistoryPage projectId={selectedProjectId} />}
+          {currentView === 'history' && <HistoryPage 
+            projectId={selectedProjectId} 
+            onNavigateToApi={(apiId) => {
+              useStore.getState().setActiveApiId(apiId);
+              setCurrentView('editor');
+            }} 
+          />}
         </main>
       </div>
     </>

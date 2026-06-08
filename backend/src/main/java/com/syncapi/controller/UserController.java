@@ -18,4 +18,9 @@ public class UserController {
     public UserResponseDto register(@RequestBody UserRequestDto request) {
         return userService.registerUser(request);
     }
+
+    @PostMapping("/login")
+    public UserResponseDto login(@RequestBody com.syncapi.dto.user.UserLoginRequestDto request) {
+        return userService.login(request);
+    }
 }

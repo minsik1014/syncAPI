@@ -20,25 +20,14 @@ export default function SignupPage({ onSignup, onNavigateLogin }: SignupPageProp
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error('회원가입 실패');
-      }
-
-      const data = await response.json();
+      const { signup } = await import('../../api/authApi');
+      const data = await signup({ name, email, password });
       console.log('회원가입 성공:', data);
       alert('회원가입이 완료되었습니다! 로그인해주세요.');
       onNavigateLogin();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('이미 사용 중인 이메일이거나 회원가입에 실패했습니다.');
+      alert(error.response?.data?.message || '이미 사용 중인 이메일이거나 회원가입에 실패했습니다.');
     } finally {
       setIsLoading(false);
     }

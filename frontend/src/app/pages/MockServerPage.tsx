@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy, CheckCircle, Activity, Clock, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { copyToClipboard } from '../utils/clipboard';
@@ -9,19 +9,33 @@ interface MockServerProps {
 }
 
 export default function MockServer({ projectId }: MockServerProps) {
-  const { apiTrees, mockStats } = useStore();
+  const { apiTrees, projects, fetchApiTrees, fetchProjects } = useStore();
   const [copied, setCopied] = useState(false);
 
-  // Get project data from store
+  // 컴포넌트 마운트 시 최신 API 목록과 통계를 불러옴
+  useEffect(() => {
+    fetchProjects();
+    if (projectId && !apiTrees[projectId]) {
+      fetchApiTrees(projectId);
+    }
+  }, [projectId, apiTrees, fetchApiTrees, fetchProjects]);
+
+  // Get project stats from real data
+  const project = projects.find(p => p.id === projectId);
   const projectFolders = projectId ? (apiTrees[projectId] || []) : [];
-  const stats = projectId ? (mockStats[projectId] || { totalApis: 0, todayRequests: 0, avgResponseTime: 0 }) : null;
   
   // Flatten all APIs from all folders
   const allApis = projectFolders.flatMap(folder => folder.apis);
 
+  const stats = project ? {
+    totalApis: project.apiCount || allApis.length,
+    todayRequests: project.todayRequests || 0,
+    avgResponseTime: project.avgLatency || 0
+  } : null;
+
   const baseUrl = projectId
-    ? `https://mock.syncapi.dev/p-${projectId}`
-    : 'https://mock.syncapi.dev';
+    ? `http://localhost:8082/mock/${projectId}`
+    : 'http://localhost:8082/mock';
 
   const handleCopyUrl = async () => {
     const success = await copyToClipboard(baseUrl);
