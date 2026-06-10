@@ -1,5 +1,8 @@
 # SyncAPI
 
+**🔗 라이브 데모 (Vercel 배포): [https://sync-api-theta.vercel.app/](https://sync-api-theta.vercel.app/)**
+> *오프라인 게스트 모드를 통해 백엔드 서버(Mac)가 꺼져 있어도 전체 UI와 기능을 체험해 볼 수 있습니다.*
+
 SyncAPI는 프론트엔드와 백엔드 개발자 간의 원활한 협업을 위한 **API 명세서 관리 및 Mock 서버 플랫폼**입니다.
 복잡한 API 문서를 직관적으로 관리하고, 가상(Mock) 서버 기능을 통해 백엔드 개발이 완료되기 전에도 프론트엔드 개발이 가능하도록 지원합니다.
 
