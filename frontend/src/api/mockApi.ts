@@ -1,4 +1,10 @@
-import { v4 as uuidv4 } from 'uuid';
+// 간단한 uuid 생성 함수 (외부 라이브러리 의존성 제거)
+const uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 // 인메모리 가짜 데이터베이스 (새로고침 전까지 유지)
 let mockProjects = [
