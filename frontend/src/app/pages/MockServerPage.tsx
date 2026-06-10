@@ -99,7 +99,7 @@ export default function MockServer({ projectId }: MockServerProps) {
 
             <div className="flex items-center gap-4 max-w-4xl mx-auto">
               <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-3xl text-white text-xl font-mono text-center shadow-inner">
-                {baseUrl}
+                {mockUrl}
               </div>
               <button
                 onClick={handleCopyUrl}
