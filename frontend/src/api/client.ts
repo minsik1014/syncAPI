@@ -6,6 +6,7 @@ const client = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // Ngrok 경고창 우회
   },
   timeout: 5000,
 });
