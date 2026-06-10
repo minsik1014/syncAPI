@@ -14,6 +14,24 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleGuestLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { login } = await import('../../api/authApi');
+      const response = await login({ email: 'guest@syncapi.com', password: 'guest' });
+      
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('user', JSON.stringify({ id: response.id, name: response.name, email: response.email }));
+      
+      onLogin();
+    } catch (error) {
+      alert('게스트 로그인에 실패했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -122,14 +140,11 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
           <div className="mt-8 text-center">
             <Button 
               type="button" 
-              onClick={() => {
-                setEmail('guest@syncapi.com');
-                setPassword('guest');
-                // Optional: Auto-submit here or let the user click submit
-              }}
+              onClick={handleGuestLogin}
+              disabled={isLoading}
               className="w-full h-12 rounded-xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white transition-all font-bold text-lg flex items-center justify-center gap-3 shadow-lg"
             >
-              🚀 서버 접속 없이 1초만에 체험하기 (게스트)
+              게스트 로그인
             </Button>
           </div>
 
