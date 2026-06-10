@@ -33,12 +33,13 @@ export default function MockServer({ projectId }: MockServerProps) {
     avgResponseTime: project.avgLatency || 0
   } : null;
 
-  const baseUrl = projectId
-    ? `http://localhost:8082/mock/${projectId}`
-    : 'http://localhost:8082/mock';
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082';
+  const mockUrl = projectId 
+    ? `${BASE_URL}/mock/${projectId}` 
+    : `${BASE_URL}/mock`;
 
   const handleCopyUrl = async () => {
-    const success = await copyToClipboard(baseUrl);
+    const success = await copyToClipboard(mockUrl);
     if (success) {
       setCopied(true);
       toast.success('Mock URL이 복사되었습니다!');

@@ -21,11 +21,35 @@ export const generateSampleJson = (fields: Field[]): string => {
 };
 
 /**
+ * Endpoint 경로와 HTTP Method를 기반으로 영어 함수명(camelCase)을 자동 생성합니다.
+ */
+const generateOperationId = (method: string, path: string): string => {
+  // 1. Path Variable 변환 (예: /{id} -> ById)
+  let cleanPath = path.replace(/\/\{([^}]+)\}/g, (_, p1) => {
+    return 'By' + p1.charAt(0).toUpperCase() + p1.slice(1);
+  });
+  
+  // 2. 공통 접두사(/api) 제거
+  cleanPath = cleanPath.replace(/^\/api\//, '/');
+  
+  // 3. 슬래시(/) 단위로 잘라서 camelCase 변환
+  const parts = cleanPath.split('/').filter(Boolean);
+  const camelCasePath = parts.map((part, index) => {
+    if (index === 0) return part;
+    return part.charAt(0).toUpperCase() + part.slice(1);
+  }).join('');
+  
+  // 4. Method + Path 조합
+  if (!camelCasePath) return method.toLowerCase();
+  return method.toLowerCase() + camelCasePath.charAt(0).toUpperCase() + camelCasePath.slice(1);
+};
+
+/**
  * API 명세를 바탕으로 Axios 코드를 생성합니다.
  */
 export const generateAxiosCode = (api: ApiItem): string => {
   const { method, path, name, request } = api;
-  const funcName = name.replace(/\s+/g, '');
+  const funcName = generateOperationId(method, path);
   
   let code = `import axios from 'axios';\n\n`;
   code += `/**\n * ${name}\n * Endpoint: ${path}\n */\n`;
@@ -53,15 +77,16 @@ export const generateAxiosCode = (api: ApiItem): string => {
  * API 명세를 바탕으로 React Query (TanStack Query) 코드를 생성합니다.
  */
 export const generateReactQueryCode = (api: ApiItem): string => {
-  const { method, name } = api;
-  const funcName = name.replace(/\s+/g, '');
+  const { method, name, path } = api;
+  const funcName = generateOperationId(method, path);
   const isMutation = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
   
   let code = `import { use${isMutation ? 'Mutation' : 'Query'} } from '@tanstack/react-query';\n`;
   code += `import { ${funcName} } from './api';\n\n`;
+  code += `/**\n * ${name}\n * Endpoint: ${path}\n */\n`;
   
   if (isMutation) {
-    code += `export const use${funcName} = () => {\n`;
+    code += `export const use${funcName.charAt(0).toUpperCase() + funcName.slice(1)} = () => {\n`;
     code += `  return useMutation({\n`;
     code += `    mutationFn: (data) => ${funcName}(data),\n`;
     code += `    onSuccess: (data) => {\n`;
@@ -70,7 +95,7 @@ export const generateReactQueryCode = (api: ApiItem): string => {
     code += `  });\n`;
     code += `};`;
   } else {
-    code += `export const use${funcName} = (params) => {\n`;
+    code += `export const use${funcName.charAt(0).toUpperCase() + funcName.slice(1)} = (params) => {\n`;
     code += `  return useQuery({\n`;
     code += `    queryKey: ['${funcName}', params],\n`;
     code += `    queryFn: () => ${funcName}(params),\n`;

@@ -97,12 +97,39 @@ public class MockController {
         mockResponse.forEach((k, v) -> System.out.println("    ▶ [" + k + "] : " + v));
         System.out.println("==============================\n");
 
-        // 성공 로그 저장
-        // 임의의 딜레이 시뮬레이션 (10~50ms 사이)
-        long randomProcessingTime = (long)(Math.random() * 40) + 10;
+        // X-Mock-Delay 헤더 처리 (강제 지연)
+        String mockDelayStr = request.getHeader("X-Mock-Delay");
+        long mockDelay = 0;
+        if (mockDelayStr != null && !mockDelayStr.isEmpty()) {
+            try { mockDelay = Long.parseLong(mockDelayStr); } catch (Exception e) {}
+        }
+
+        // 성공 로그 저장 및 지연 시뮬레이션
+        long randomProcessingTime = mockDelay > 0 ? mockDelay : (long)(Math.random() * 40) + 10;
         try { Thread.sleep(randomProcessingTime); } catch (Exception e) {}
         
         long latency = System.currentTimeMillis() - startTime;
+        
+        // X-Mock-Error 헤더 처리 (강제 에러)
+        String mockErrorStr = request.getHeader("X-Mock-Error");
+        if (mockErrorStr != null && !mockErrorStr.isEmpty()) {
+            try {
+                int forcedStatusCode = Integer.parseInt(mockErrorStr);
+                mockApiLogRepository.save(MockApiLog.builder()
+                        .projectId(projectId)
+                        .method(method)
+                        .endpoint(endpoint)
+                        .latencyMs(latency)
+                        .statusCode(forcedStatusCode)
+                        .build());
+                Map<String, Object> errorResp = new HashMap<>();
+                errorResp.put("status", forcedStatusCode);
+                errorResp.put("error", "Forced Error");
+                errorResp.put("message", "강제 " + forcedStatusCode + " 에러입니다.");
+                return ResponseEntity.status(forcedStatusCode).body(errorResp);
+            } catch (Exception e) {}
+        }
+
         mockApiLogRepository.save(MockApiLog.builder()
                 .projectId(projectId)
                 .method(method)

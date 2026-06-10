@@ -27,17 +27,21 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    // 2. 로그인 (JPA 버전)
+    // 2. 로그인 (JPA 버전 - 더 이상 직접 사용 안함, Spring Security가 대신 처리)
     public Member login(Member member) {
-        // DB에서 이메일로 SELECT 쿼리를 날려 회원 찾기
         Member findMember = memberRepository.findByEmail(member.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다."));
         
-        // 비밀번호 비교
         if (!findMember.getPassword().equals(member.getPassword())) {
             throw new IllegalArgumentException("아이디 또는 비밀번호가 일치하지 않습니다.");
         }
         
         return findMember;
+    }
+
+    // 3. 이메일로 회원 조회
+    public Member findByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
     }
 }

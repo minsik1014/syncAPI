@@ -63,6 +63,15 @@ export function useApiEditor(projectId: string | null) {
             setSelectedApiId(targetApi.id);
             setEditingApi({ ...targetApi });
             setSelectedFolderId(targetFolderId);
+            
+            // 데이터가 있는 탭을 자동으로 먼저 보여주기
+            if (targetApi.request?.body && targetApi.request.body.length > 0) {
+              setRequestTab('body');
+            } else if (targetApi.request?.headers && targetApi.request.headers.length > 0) {
+              setRequestTab('headers');
+            } else {
+              setRequestTab('params');
+            }
           }
 
           if (activeApiId) {
@@ -77,6 +86,15 @@ export function useApiEditor(projectId: string | null) {
     setSelectedApiId(api.id);
     setEditingApi({ ...api });
     setActiveTab('spec');
+    
+    // 데이터가 있는 탭을 자동으로 먼저 보여주기 위한 스마트 탭 전환 로직
+    if (api.request?.body && api.request.body.length > 0) {
+      setRequestTab('body');
+    } else if (api.request?.headers && api.request.headers.length > 0) {
+      setRequestTab('headers');
+    } else {
+      setRequestTab('params');
+    }
   };
 
   const handleDeleteApi = (apiId: string) => {
@@ -183,36 +201,40 @@ export function useApiEditor(projectId: string | null) {
     setResponseData('');
     
     const delay = editingApi.mockConfig?.delay || 0;
-    await new Promise(resolve => setTimeout(resolve, delay));
-    
     const forcedError = editingApi.mockConfig?.forcedError;
-    if (forcedError) {
-      setResponseData(JSON.stringify({ status: forcedError, error: 'Error', message: `Forced ${forcedError} error` }, null, 2));
-      toast.error(`Mock API 요청 실패 (${forcedError})`);
-    } else {
-      try {
-        const url = `http://localhost:8082/mock/${projectId}${editingApi.path}`;
-        const res = await fetch(url, {
-          method: editingApi.method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        const data = await res.json();
-        
-        if (!res.ok) {
-          setResponseData(JSON.stringify(data, null, 2));
-          toast.error(`Mock API 에러: ${res.status}`);
-        } else {
-          setResponseData(JSON.stringify(data, null, 2));
-          toast.success('실제 백엔드 Mock API 응답 완료!');
-        }
-      } catch (error: any) {
-        setResponseData(JSON.stringify({ error: 'Network Error', message: error.message }, null, 2));
-        toast.error('백엔드 Mock API 요청 실패');
+    
+    try {
+      const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082';
+      const url = `${BASE_URL}/mock/${projectId}${editingApi.path}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (forcedError) {
+        headers['X-Mock-Error'] = forcedError.toString();
       }
+      if (delay > 0) {
+        headers['X-Mock-Delay'] = delay.toString();
+      }
+
+      const res = await fetch(url, {
+        method: editingApi.method,
+        headers,
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setResponseData(JSON.stringify(data, null, 2));
+        toast.error(`Mock API 에러: ${res.status}`);
+      } else {
+        setResponseData(JSON.stringify(data, null, 2));
+        toast.success('실제 백엔드 Mock API 응답 완료!');
+      }
+    } catch (error: any) {
+      setResponseData(JSON.stringify({ error: 'Network Error', message: error.message }, null, 2));
+      toast.error('백엔드 Mock API 요청 실패');
     }
+    
     setIsLoading(false);
   };
 

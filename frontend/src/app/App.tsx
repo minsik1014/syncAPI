@@ -12,7 +12,10 @@ import { useStore } from './store/useStore';
 type View = 'dashboard' | 'editor' | 'mock' | 'history';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // 페이지 새로고침 시 localStorage에 토큰과 유저 정보가 있는지 확인하여 로그인 유지
+    return !!localStorage.getItem('accessToken') && !!localStorage.getItem('user');
+  });
   const [authView, setAuthView] = useState<'login' | 'signup'>('login');
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -42,6 +45,17 @@ export default function App() {
   const handleSelectProject = (projectId: string) => {
     setSelectedProjectId(projectId);
     setCurrentView('editor');
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('정말 로그아웃 하시겠습니까?')) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      setIsAuthenticated(false);
+      setCurrentView('dashboard');
+      setSelectedProjectId(null);
+    }
   };
 
   if (!isAuthenticated) {
@@ -117,7 +131,7 @@ export default function App() {
             )}
           </div>
 
-          <nav className="flex-1 p-4 space-y-1.5">
+          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
             {navigation.map((item) => (
               <button
                 key={item.id}
@@ -134,13 +148,19 @@ export default function App() {
             ))}
           </nav>
 
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-gray-100 flex flex-col gap-2">
             <button
               onClick={() => { setCurrentView('dashboard'); setShowCreateModal(true); }}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white rounded-xl hover:bg-black transition-all font-bold text-sm"
             >
               <Plus size={18} />
               <span>새 프로젝트</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 mt-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all font-semibold text-sm"
+            >
+              로그아웃
             </button>
           </div>
         </aside>

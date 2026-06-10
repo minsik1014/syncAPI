@@ -20,9 +20,17 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
 
     try {
       const { login } = await import('../../api/authApi');
-      const user = await login({ email, password });
-      console.log('로그인 성공', user);
+      const response = await login({ email, password });
+      console.log('로그인 성공', response);
+      
+      // Save tokens
+      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
+      
+      // Save user info
+      const user = { id: response.id, name: response.name, email: response.email };
       localStorage.setItem('user', JSON.stringify(user));
+      
       onLogin();
     } catch (error: any) {
       alert(error.response?.data?.message || '아이디 또는 비밀번호가 일치하지 않습니다.');

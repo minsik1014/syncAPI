@@ -242,6 +242,7 @@ export const useStore = create<SyncApiState>((set, get) => ({
         logDetails: logDetails || updates.name
       };
       await updateApiSpec(apiId, apiData);
+      await get().fetchActivities(projectId); // 저장 후 히스토리 즉시 갱신
       set((state) => {
         const projectTree = state.apiTrees[projectId] || [];
         const updatedTree = projectTree.map(folder => ({
@@ -257,6 +258,7 @@ export const useStore = create<SyncApiState>((set, get) => ({
     try {
       const { deleteApiSpec } = await import('../../api/apiSpecApi');
       await deleteApiSpec(apiId);
+      await get().fetchActivities(projectId);
       set((state) => {
         const projectTree = state.apiTrees[projectId] || [];
         const updatedTree = projectTree.map(folder => ({
@@ -286,6 +288,7 @@ export const useStore = create<SyncApiState>((set, get) => ({
         } : undefined,
         userId: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string).id : undefined
       });
+      await get().fetchActivities(projectId);
       set((state) => {
         const projectTree = state.apiTrees[projectId] || [];
         const updatedTree = projectTree.map(folder => 

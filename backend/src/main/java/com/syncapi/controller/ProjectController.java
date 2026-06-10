@@ -26,8 +26,14 @@ public class ProjectController {
 
     // 프로젝트 생성 API
     @PostMapping
-    public ProjectResponseDto createProject(@RequestBody ProjectRequestDto requestDto) {
-        return projectService.createProject(requestDto);
+    public ResponseEntity<?> createProject(@RequestBody ProjectRequestDto requestDto) {
+        try {
+            ProjectResponseDto response = projectService.createProject(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(e.getMessage() + "\n" + e.toString());
+        }
     }
 
     @DeleteMapping("/{projectId}")
