@@ -119,14 +119,17 @@ export default function LoginPage({ onLogin, onNavigateSignup }: LoginPageProps)
             <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">또는</span>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 text-center">
             <Button 
               type="button" 
-              variant="outline" 
-              className="w-full h-12 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white transition-all font-semibold flex items-center gap-3"
+              onClick={() => {
+                setEmail('guest@syncapi.com');
+                setPassword('guest');
+                // Optional: Auto-submit here or let the user click submit
+              }}
+              className="w-full h-12 rounded-xl bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white transition-all font-bold text-lg flex items-center justify-center gap-3 shadow-lg"
             >
-              <Github size={20} />
-              GitHub으로 계속하기
+              🚀 서버 접속 없이 1초만에 체험하기 (게스트)
             </Button>
           </div>
 
