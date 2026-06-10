@@ -3,15 +3,17 @@
 SyncAPI의 백엔드 애플리케이션입니다.
 회원 가입, API 명세서 저장, 프로젝트 관리, 멤버 초대 등 서비스의 핵심 로직과 데이터베이스 연동을 담당합니다.
 
-## 🛠 기술 스택 (Tech Stack)
+## 기술 스택 (Tech Stack)
 
-- **Framework:** Spring Boot 3.x
-- **Language:** Java 17
-- **Database:** MySQL 8.0 (JPA/Hibernate)
-- **Security:** Spring Security, JWT (JSON Web Token)
-- **Build Tool:** Gradle
+| 영역 | 기술 스택 | 배지 (Badge) |
+| :---: | :---: | :---: |
+| **프레임워크** | Spring Boot 3.x | <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white"/> |
+| **언어 (Lang)** | Java 17 | <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=java&logoColor=white"/> |
+| **데이터베이스** | MySQL 8.0, JPA | <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/> <img src="https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=Hibernate&logoColor=white"/> |
+| **보안 및 인증** | Spring Security, JWT | <img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=Spring-Security&logoColor=white"/> <img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens"/> |
+| **빌드 시스템** | Gradle | <img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=Gradle&logoColor=white"/> |
 
-## ✨ 주요 아키텍처 및 특징
+## 주요 아키텍처 및 특징
 
 1. **글로벌 CORS 및 Preflight(OPTIONS) 처리**
    - Vercel과 같은 글로벌 클라우드에 배포된 프론트엔드와 문제없이 통신하기 위해 `SecurityConfig`에 `CorsConfigurationSource`를 주입하여 전역 CORS 정책을 수립했습니다.
@@ -24,7 +26,7 @@ SyncAPI의 백엔드 애플리케이션입니다.
 3. **JWT 기반의 Stateless 보안 구조**
    - 세션(Session)에 의존하지 않는 JWT(Access/Refresh) 기반 인증 방식을 채택하여 API 서버로서의 확장성과 무상태성(Stateless)을 보장합니다.
 
-## 🚀 로컬 실행 방법
+## 로컬 실행 방법
 
 ### 환경 변수 설정
 실행 전 로컬 MySQL 데이터베이스를 준비하고, 아래 환경 변수를 IDE(IntelliJ 등)의 설정이나 시스템 변수로 등록해야 합니다.

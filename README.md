@@ -7,6 +7,12 @@ SyncAPI는 프론트엔드와 백엔드 개발자 간의 원활한 협업을 위
 
 본 프로젝트는 완전히 분리된 **프론트엔드-백엔드 하이브리드 아키텍처**로 구성되어 있습니다.
 
+| 분야 | 기술 스택 | 배포 및 인프라 |
+| :---: | :---: | :---: |
+| **Frontend** | <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB"/> <img src="https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E"/> <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white"/> | <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white"/> |
+| **Backend** | <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white"/> <img src="https://img.shields.io/badge/Java-007396?style=for-the-badge&logo=java&logoColor=white"/> <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white"/> | Mac Local Server |
+| **Network** | <img src="https://img.shields.io/badge/Ngrok-1F1E37?style=for-the-badge&logo=ngrok&logoColor=white"/> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white"/> | Reverse Proxy Tunnel |
+
 - **Frontend:** Vercel에 배포되어 전 세계 어디서든 24시간 접속 가능한 무중단 서비스
 - **Backend:** Mac 로컬 환경의 Spring Boot 및 MySQL 서버 사용
 - **Network Tunneling:** Ngrok 리버스 프록시를 통해 클라우드 프론트엔드와 로컬 백엔드를 안전하게 연결
@@ -23,7 +29,7 @@ SyncAPI는 프론트엔드와 백엔드 개발자 간의 원활한 협업을 위
 - `/frontend`: React 기반 프론트엔드 애플리케이션 (상세 내용은 [frontend/README.md](./frontend/README.md) 참고)
 - `/backend`: Spring Boot 기반 백엔드 애플리케이션 (상세 내용은 [backend/README.md](./backend/README.md) 참고)
 
-## 💡 시작하기 (개발 가이드)
+## 시작하기 (개발 가이드)
 
 ### 1. 백엔드 실행
 1. `backend` 폴더로 이동합니다.
